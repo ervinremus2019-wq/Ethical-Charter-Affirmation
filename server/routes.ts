@@ -12,10 +12,10 @@ export async function registerRoutes(
   app.post("/api/affirmations", async (req, res) => {
     const result = insertAffirmationSchema.safeParse(req.body);
     if (!result.success) {
-      return res.status(400).json({ error: result.error });
+      return res.status(400).json({ error: result.error.errors[0].message });
     }
 
-    const toxicTerms = ["hate", "threat", "violence"];
+    const toxicTerms = ["hate", "threat", "violence", "kill", "attack"];
     if (toxicTerms.some(term => result.data.fullName.toLowerCase().includes(term))) {
       return res.status(400).json({ error: "Input contains prohibited language." });
     }

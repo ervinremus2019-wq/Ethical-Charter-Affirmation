@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useRoute } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
+import { Search, CheckCircle2, XCircle, ShieldCheck, Download, Calendar, Fingerprint } from "lucide-react";
 import { type Affirmation } from "@shared/schema";
 
 export default function Verify() {
@@ -24,8 +24,8 @@ export default function Verify() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/affirmations/verify/${id}`);
-      if (!res.ok) throw new Error("Certificate not found");
+      const res = await fetch(`/api/affirmations/verify/${id.toUpperCase()}`);
+      if (!res.ok) throw new Error("Certificate record not found in registry.");
       const data = await res.json();
       setResult(data);
     } catch (e: any) {
@@ -37,68 +37,83 @@ export default function Verify() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4">
-      <div className="max-w-2xl mx-auto space-y-8">
+    <div className="min-h-screen bg-slate-50 py-16 px-4">
+      <div className="max-w-2xl mx-auto space-y-12">
         <div className="text-center">
-          <ShieldCheck className="h-16 w-16 text-slate-900 mx-auto mb-4" />
-          <h1 className="text-3xl font-serif">Certificate Verification</h1>
-          <p className="text-slate-500 mt-2">Enter a unique Certificate ID to verify its authenticity</p>
+          <ShieldCheck className="h-20 w-20 text-slate-900 mx-auto mb-6" />
+          <h1 className="text-4xl font-serif text-slate-900">Registry Verification</h1>
+          <p className="text-slate-500 mt-2 text-lg">Enter a unique Certificate ID to verify its authenticity and record status.</p>
         </div>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex gap-2">
+        <Card className="shadow-lg border-slate-200">
+          <CardContent className="pt-8">
+            <div className="flex flex-col sm:flex-row gap-4">
               <Input 
                 placeholder="IECC-XXXX-XXXX-XXXX" 
                 value={searchId}
-                onChange={(e) => setSearchId(e.target.value)}
-                className="font-mono uppercase"
+                onChange={(e) => setSearchId(e.target.value.toUpperCase())}
+                className="font-mono h-12 text-lg"
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchId)}
               />
               <Button 
                 onClick={() => handleSearch(searchId)}
                 disabled={loading}
-                className="bg-slate-900"
+                className="bg-slate-900 h-12 px-8 font-bold text-base"
               >
-                <Search className="h-4 w-4 mr-2" /> Verify
+                {loading ? "Searching..." : "Verify Record"}
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        {loading && <div className="text-center py-8">Searching registry...</div>}
-
         {error && (
-          <div className="bg-red-50 border border-red-200 p-6 rounded-lg text-center">
-            <XCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-            <p className="text-red-700 font-medium">{error}</p>
-            <p className="text-red-600 text-sm mt-1">Please check the ID and try again.</p>
+          <div className="bg-red-50 border-2 border-red-200 p-8 rounded-2xl text-center animate-in slide-in-from-top-4">
+            <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <p className="text-red-900 font-bold text-lg">{error}</p>
+            <p className="text-red-700 mt-2">Please verify the ID format and try again. All IDs are case-sensitive.</p>
           </div>
         )}
 
         {result && (
-          <Card className="border-green-200 bg-white overflow-hidden animate-in fade-in slide-in-from-bottom-4">
-            <div className="h-2 bg-green-500" />
-            <CardHeader>
-              <div className="flex items-center gap-2 text-green-600 mb-2">
-                <CheckCircle2 className="h-5 w-5" />
-                <span className="font-bold uppercase tracking-wider text-xs">Authentic Record Found</span>
+          <Card className="border-green-500 border-[3px] bg-white overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-500">
+            <div className="h-4 bg-green-500" />
+            <CardHeader className="p-10 border-b">
+              <div className="flex items-center gap-3 text-green-600 mb-4">
+                <CheckCircle2 className="h-8 w-8" />
+                <span className="font-black uppercase tracking-widest text-sm">Authentic Registry Record Found</span>
               </div>
-              <CardTitle className="text-2xl font-serif">{result.fullName}</CardTitle>
+              <CardTitle className="text-4xl font-serif text-slate-900">{result.fullName}</CardTitle>
+              <CardDescription className="text-lg italic mt-2">Verified signatory of the International Ethical Commitment Charter.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-6 py-4 border-y">
-                <div>
-                  <p className="text-xs uppercase font-bold text-slate-400">Certificate ID</p>
-                  <code className="text-sm font-mono text-slate-900">{result.certificateId}</code>
+            <CardContent className="p-10 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3 bg-slate-50 p-6 rounded-xl border">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Fingerprint className="h-4 w-4" />
+                    <span className="text-[10px] uppercase font-black tracking-wider">Unique Certificate ID</span>
+                  </div>
+                  <code className="text-lg font-mono font-bold text-slate-900 block">{result.certificateId}</code>
                 </div>
-                <div>
-                  <p className="text-xs uppercase font-bold text-slate-400">Timestamp</p>
-                  <p className="text-sm text-slate-900">{new Date(result.timestamp).toLocaleString()}</p>
+                <div className="space-y-3 bg-slate-50 p-6 rounded-xl border">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Calendar className="h-4 w-4" />
+                    <span className="text-[10px] uppercase font-black tracking-wider">Verification Timestamp</span>
+                  </div>
+                  <p className="text-lg font-serif font-bold text-slate-900">{new Date(result.timestamp).toLocaleString()}</p>
                 </div>
               </div>
-              <p className="text-sm text-slate-500 leading-relaxed italic">
-                This individual has verified their commitment to the International Ethical Commitment Charter. This record is permanent and cryptographically generated.
-              </p>
+              
+              <div className="bg-green-50 border border-green-100 p-6 rounded-xl">
+                <p className="text-green-800 leading-relaxed font-medium italic">
+                  "This record confirms that the individual above has solemnly affirmed their commitment to truth, dignity, and accountability as defined by the International Ethical Commitment Charter."
+                </p>
+              </div>
+
+              <div className="flex justify-center pt-4">
+                <Button variant="outline" className="flex items-center gap-2 px-8 h-12" onClick={() => window.print()}>
+                  <Download className="h-4 w-4" /> Export Verification Result
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}
